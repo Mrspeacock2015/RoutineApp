@@ -1,0 +1,1842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#18181b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>RoutineFlow Modular Daily Tracker</title>
+
+  <!-- Dynamic Offline Web App Manifest -->
+  <link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22RoutineFlow%20Tracker%22%2C%22short_name%22%3A%22RoutineFlow%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%2318181b%22%2C%22theme_color%22%3A%22%2318181b%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%3C%3Fxml%20version%3D'1.0'%20encoding%3D'UTF-8'%3F%3E%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%20512%20512'%3E%3Crect%20width%3D'512'%20height%3D'512'%20rx%3D'128'%20fill%3D'%236366f1'%2F%3E%3Cpath%20d%3D'M170%20256l60%2060%20120-120'%20stroke%3D'%23ffffff'%20stroke-width%3D'44'%20fill%3D'none'%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'%2F%3E%3C%2Fsvg%3E%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
+
+  <style>
+    :root {
+      --bg: #121214;
+      --card-bg: #1c1c20;
+      --card-sub: #25252b;
+      --border: #2e2e36;
+      --text-main: #f4f4f5;
+      --text-muted: #a1a1aa;
+      --text-dim: #71717a;
+      
+      --accent: #6366f1;
+      --accent-hover: #4f46e5;
+      --accent-soft: rgba(99, 102, 241, 0.15);
+      
+      --energy-high: #f59e0b;
+      --energy-high-soft: rgba(245, 158, 11, 0.15);
+      --energy-med: #3b82f6;
+      --energy-med-soft: rgba(59, 130, 246, 0.15);
+      --energy-low: #10b981;
+      --energy-low-soft: rgba(16, 185, 129, 0.15);
+      --energy-rest: #8b5cf6;
+      --energy-rest-soft: rgba(139, 92, 246, 0.15);
+
+      --danger: #ef4444;
+      --danger-soft: rgba(239, 68, 68, 0.15);
+      --success: #10b981;
+      --overrun: #ec4899;
+      --overrun-soft: rgba(236, 72, 153, 0.15);
+
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: calc(var(--safe-top) + 16px) 16px calc(var(--safe-bottom) + 80px) 16px;
+      overflow-x: hidden;
+    }
+
+    /* Typography & Core Utilities */
+    h1, h2, h3, h4 { font-weight: 700; letter-spacing: -0.02em; }
+    input, textarea, select, button {
+      font-family: inherit;
+      color: inherit;
+      outline: none;
+      border: none;
+    }
+    input, textarea, select {
+      user-select: text;
+    }
+
+    /* App Header */
+    .app-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .date-display {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 2px;
+    }
+    .title-display {
+      font-size: 1.5rem;
+      color: var(--text-main);
+    }
+
+    /* Buttons & Touch Targets */
+    .btn-icon {
+      background: var(--card-sub);
+      color: var(--text-main);
+      min-width: 44px;
+      min-height: 44px;
+      border-radius: var(--radius-sm);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      font-size: 1.1rem;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .btn-icon:active { transform: scale(0.94); background: var(--border); }
+    
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      font-weight: 600;
+      min-height: 48px;
+      padding: 0 18px;
+      border-radius: var(--radius-md);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      width: 100%;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+    }
+    .btn-primary:active { background: var(--accent-hover); transform: scale(0.98); }
+
+    .btn-secondary {
+      background: var(--card-sub);
+      color: var(--text-main);
+      font-weight: 600;
+      min-height: 44px;
+      padding: 0 14px;
+      border-radius: var(--radius-sm);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      cursor: pointer;
+      border: 1px solid var(--border);
+    }
+
+    /* Energy Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .badge-high { background: var(--energy-high-soft); color: var(--energy-high); border: 1px solid rgba(245,158,11,0.3); }
+    .badge-med { background: var(--energy-med-soft); color: var(--energy-med); border: 1px solid rgba(59,130,246,0.3); }
+    .badge-low { background: var(--energy-low-soft); color: var(--energy-low); border: 1px solid rgba(16,185,129,0.3); }
+    .badge-rest { background: var(--energy-rest-soft); color: var(--energy-rest); border: 1px solid rgba(139,92,246,0.3); }
+    .badge-loop { background: var(--accent-soft); color: var(--accent); border: 1px solid rgba(99,102,241,0.3); }
+    .badge-date { background: rgba(255, 255, 255, 0.08); color: var(--text-main); font-size: 0.7rem; }
+    .badge-today { background: var(--accent-soft); color: var(--accent); border: 1px solid rgba(99, 102, 241, 0.3); }
+
+    /* Pinned Appointments Section */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      margin-bottom: 18px;
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .card-title {
+      font-size: 1.05rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .event-list { display: flex; flex-direction: column; gap: 8px; }
+    .event-item {
+      display: flex;
+      align-items: center;
+      background: var(--card-sub);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      gap: 12px;
+    }
+    .event-item.is-past {
+      opacity: 0.6;
+    }
+    .event-date-col {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 3px;
+      min-width: 92px;
+    }
+    .event-time {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--accent);
+      white-space: nowrap;
+    }
+    .event-details { flex: 1; min-width: 0; }
+    .event-name { font-weight: 600; font-size: 0.92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .event-meta { font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* Modular Routine Blocks */
+    .blocks-container { display: flex; flex-direction: column; gap: 16px; }
+    
+    .routine-block {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .block-top {
+      padding: 14px 16px;
+      background: rgba(255,255,255,0.02);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .block-info { flex: 1; min-width: 0; }
+    .block-title-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+    .block-title { font-size: 1.05rem; font-weight: 700; }
+    .block-meta { font-size: 0.75rem; color: var(--text-muted); }
+    
+    .block-actions { display: flex; align-items: center; gap: 4px; }
+    .reorder-btn {
+      width: 36px;
+      height: 36px;
+      min-width: 36px;
+      min-height: 36px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+    }
+
+    .task-list {
+      padding: 10px 16px 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    /* Tasks & Subtasks */
+    .task-item {
+      background: var(--card-sub);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      transition: border 0.15s, opacity 0.15s;
+    }
+    .task-item.is-loop-active {
+      border: 2px solid var(--accent);
+      background: rgba(99, 102, 241, 0.06);
+    }
+    .task-row {
+      display: flex;
+      align-items: center;
+      padding: 10px 12px;
+      gap: 10px;
+      min-height: 52px;
+    }
+    
+    .checkbox-custom {
+      width: 26px;
+      height: 26px;
+      min-width: 26px;
+      min-height: 26px;
+      border-radius: 7px;
+      border: 2px solid var(--text-dim);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      background: transparent;
+      transition: all 0.15s ease;
+    }
+    .checkbox-custom.checked {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .checkbox-custom svg { width: 16px; height: 16px; display: none; stroke-width: 3.5; }
+    .checkbox-custom.checked svg { display: block; }
+
+    .task-content {
+      flex: 1;
+      min-width: 0;
+      cursor: pointer;
+    }
+    .task-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .task-title.completed {
+      text-decoration: line-through;
+      color: var(--text-dim);
+    }
+    .task-duration {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      background: rgba(255,255,255,0.06);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .task-controls {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Subtasks Drawer */
+    .subtasks-container {
+      background: rgba(0, 0, 0, 0.2);
+      border-top: 1px solid var(--border);
+      padding: 8px 12px 10px 38px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .subtask-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 0.85rem;
+      min-height: 36px;
+    }
+    .subtask-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+    }
+    .subtask-checkbox {
+      width: 20px;
+      height: 20px;
+      min-width: 20px;
+      min-height: 20px;
+      border-radius: 5px;
+      border: 1.5px solid var(--text-dim);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .subtask-checkbox.checked {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+    .subtask-checkbox svg { width: 12px; height: 12px; display: none; stroke-width: 3; }
+    .subtask-checkbox.checked svg { display: block; }
+    .subtask-title.completed { text-decoration: line-through; color: var(--text-dim); }
+
+    .block-footer {
+      padding: 8px 16px 14px 16px;
+      display: flex;
+      gap: 8px;
+    }
+
+    /* Floating Action / Add Routine Button */
+    .add-block-section {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* Modal / Bottom Sheet Overlays */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(4px);
+      z-index: 999;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .modal-sheet {
+      background: var(--card-bg);
+      border-top: 1px solid var(--border);
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      width: 100%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 20px 20px calc(var(--safe-bottom) + 24px) 20px;
+      transform: translateY(100%);
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .modal-overlay.active .modal-sheet {
+      transform: translateY(0);
+    }
+    .modal-title {
+      font-size: 1.25rem;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+    .form-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .form-input, .form-select, .form-textarea {
+      background: var(--card-sub);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      color: var(--text-main);
+      font-size: 0.95rem;
+      min-height: 48px;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      border-color: var(--accent);
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    /* Focus Flow Mode (Full-Screen Overlay) */
+    .flow-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--bg);
+      z-index: 2000;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: calc(var(--safe-top) + 20px) 24px calc(var(--safe-bottom) + 24px) 24px;
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(0.98);
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .flow-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: scale(1);
+    }
+
+    .flow-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .flow-progress-pill {
+      background: var(--card-sub);
+      border: 1px solid var(--border);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .flow-body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      margin: auto 0;
+      width: 100%;
+    }
+    .flow-block-context {
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+    }
+    .flow-task-name {
+      font-size: 1.85rem;
+      font-weight: 800;
+      line-height: 1.25;
+      margin-bottom: 24px;
+      color: #fff;
+    }
+
+    .timer-display-box {
+      background: var(--card-bg);
+      border: 2px solid var(--border);
+      border-radius: 28px;
+      padding: 24px 36px;
+      margin-bottom: 28px;
+      width: 100%;
+      max-width: 320px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      transition: border 0.3s, background 0.3s;
+    }
+    .timer-display-box.overrun {
+      border-color: var(--overrun);
+      background: var(--overrun-soft);
+      animation: pulseOverrun 2s infinite ease-in-out;
+    }
+    @keyframes pulseOverrun {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+    }
+    .timer-digits {
+      font-size: 3.2rem;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.02em;
+    }
+    .timer-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-dim);
+      margin-top: 4px;
+    }
+    .timer-display-box.overrun .timer-label {
+      color: var(--overrun);
+    }
+
+    /* Subtask Mini Checklist in Flow */
+    .flow-subtasks-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      width: 100%;
+      max-width: 340px;
+      max-height: 150px;
+      overflow-y: auto;
+      text-align: left;
+      margin-bottom: 12px;
+    }
+
+    .flow-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+      max-width: 340px;
+      margin: 0 auto;
+    }
+    .flow-timer-btn-row {
+      display: grid;
+      grid-template-columns: 1fr 1.5fr 1fr;
+      gap: 10px;
+    }
+
+    /* Empty state notification */
+    .empty-note {
+      text-align: center;
+      padding: 24px;
+      color: var(--text-dim);
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation / Header -->
+  <header class="app-header">
+    <div>
+      <div class="date-display" id="headerDate">TODAY</div>
+      <h1 class="title-display">Daily Orbit</h1>
+    </div>
+    <div style="display: flex; gap: 8px;">
+      <button class="btn-icon" id="openSettingsBtn" title="Settings & Backup" aria-label="Settings">
+        ⚙️
+      </button>
+    </div>
+  </header>
+
+  <!-- Pinned Time & Date-Anchored Appointments Card -->
+  <section class="card" id="appointmentsSection">
+    <div class="card-header">
+      <h2 class="card-title">
+        <span>📍</span> Fixed Appointments & Events
+      </h2>
+      <button class="btn-secondary" id="addEventBtn" style="padding: 0 10px; min-height: 36px; font-size: 0.85rem;">
+        + Add
+      </button>
+    </div>
+    <div class="event-list" id="eventList">
+      <!-- Injected Dynamically -->
+    </div>
+  </section>
+
+  <!-- Modular Blocks Container -->
+  <main class="blocks-container" id="blocksContainer">
+    <!-- Modular blocks rendered here -->
+  </main>
+
+  <!-- Add Routine Block Action -->
+  <div class="add-block-section">
+    <button class="btn-secondary" id="addBlockBtn" style="width: 100%; min-height: 48px;">
+      + Add Energy Block / Loop
+    </button>
+  </div>
+
+  <!-- Settings & Backup Modal -->
+  <div class="modal-overlay" id="settingsModal">
+    <div class="modal-sheet">
+      <div class="modal-title">
+        <h3>Settings & Backups</h3>
+        <button class="btn-icon reorder-btn" onclick="closeModal('settingsModal')">✕</button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Data Management</label>
+        <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 12px;">
+          All state is safely preserved in browser storage. Export a JSON backup file anytime or restore an existing one.
+        </p>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <button class="btn-secondary" id="exportDataBtn">
+            💾 Export Backup (JSON)
+          </button>
+          <button class="btn-secondary" id="triggerImportBtn">
+            📥 Import Backup (JSON)
+          </button>
+          <input type="file" id="importFileInput" accept=".json" style="display: none;">
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-top: 20px;">
+        <label class="form-label">Reset Options</label>
+        <button class="btn-secondary" id="forceDailyResetBtn" style="color: var(--danger);">
+          🔄 Force Manual Daily Reset (Uncheck all standard tasks)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Generic Add/Edit Event Modal -->
+  <div class="modal-overlay" id="eventModal">
+    <div class="modal-sheet">
+      <div class="modal-title">
+        <h3 id="eventModalTitle">Add Appointment</h3>
+        <button class="btn-icon reorder-btn" onclick="closeModal('eventModal')">✕</button>
+      </div>
+      <input type="hidden" id="eventEditId">
+      
+      <div class="form-group">
+        <label class="form-label">Event Name</label>
+        <input type="text" class="form-input" id="eventTitleInput" placeholder="e.g., Dentist, Music Class, Zoom Call">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Date</label>
+        <input type="date" class="form-input" id="eventDateInput">
+      </div>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Start Time</label>
+          <input type="time" class="form-input" id="eventStartTimeInput">
+        </div>
+        <div class="form-group">
+          <label class="form-label">End Time (Optional)</label>
+          <input type="time" class="form-input" id="eventEndTimeInput">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Location / Note</label>
+        <input type="text" class="form-input" id="eventMetaInput" placeholder="e.g., 4th St Clinic, Bring Notebook">
+      </div>
+
+      <div style="display: flex; gap: 8px; margin-top: 14px;">
+        <button class="btn-secondary" id="deleteEventBtn" style="color: var(--danger); display: none;">Delete</button>
+        <button class="btn-primary" id="saveEventBtn">Save Event</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Generic Add/Edit Block Modal -->
+  <div class="modal-overlay" id="blockModal">
+    <div class="modal-sheet">
+      <div class="modal-title">
+        <h3 id="blockModalTitle">Add Energy Block</h3>
+        <button class="btn-icon reorder-btn" onclick="closeModal('blockModal')">✕</button>
+      </div>
+      <input type="hidden" id="blockEditId">
+
+      <div class="form-group">
+        <label class="form-label">Block Title</label>
+        <input type="text" class="form-input" id="blockTitleInput" placeholder="e.g., Morning Focus, Kitchen Reset">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Energy Anchor</label>
+          <select class="form-select" id="blockEnergyInput">
+            <option value="high">High Focus</option>
+            <option value="med">Medium Energy</option>
+            <option value="low">Low Energy</option>
+            <option value="rest">Rest & Winddown</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Block Mode</label>
+          <select class="form-select" id="blockModeInput">
+            <option value="standard">Standard (Daily Checklist)</option>
+            <option value="loop">Loop (Sequential Cycle)</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 8px; margin-top: 14px;">
+        <button class="btn-secondary" id="deleteBlockBtn" style="color: var(--danger); display: none;">Delete Block</button>
+        <button class="btn-primary" id="saveBlockBtn">Save Block</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Generic Add/Edit Task Modal -->
+  <div class="modal-overlay" id="taskModal">
+    <div class="modal-sheet">
+      <div class="modal-title">
+        <h3 id="taskModalTitle">Add Task</h3>
+        <button class="btn-icon reorder-btn" onclick="closeModal('taskModal')">✕</button>
+      </div>
+      <input type="hidden" id="taskParentBlockId">
+      <input type="hidden" id="taskEditId">
+
+      <div class="form-group">
+        <label class="form-label">Task Name</label>
+        <input type="text" class="form-input" id="taskTitleInput" placeholder="e.g., Math Lesson, Deep Stretch">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Target Duration (Minutes)</label>
+        <input type="number" class="form-input" id="taskDurationInput" placeholder="15" min="1" max="180">
+      </div>
+
+      <div style="display: flex; gap: 8px; margin-top: 14px;">
+        <button class="btn-secondary" id="deleteTaskBtn" style="color: var(--danger); display: none;">Delete Task</button>
+        <button class="btn-primary" id="saveTaskBtn">Save Task</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Generic Add/Edit Subtask Modal -->
+  <div class="modal-overlay" id="subtaskModal">
+    <div class="modal-sheet">
+      <div class="modal-title">
+        <h3>Add Subtask</h3>
+        <button class="btn-icon reorder-btn" onclick="closeModal('subtaskModal')">✕</button>
+      </div>
+      <input type="hidden" id="subtaskParentBlockId">
+      <input type="hidden" id="subtaskParentTaskId">
+
+      <div class="form-group">
+        <label class="form-label">Subtask Name</label>
+        <input type="text" class="form-input" id="subtaskTitleInput" placeholder="e.g., Get workbook ready">
+      </div>
+
+      <button class="btn-primary" id="saveSubtaskBtn" style="margin-top: 10px;">Add Subtask</button>
+    </div>
+  </div>
+
+  <!-- Focus Flow Mode Overlay (RoutineFlow Full Screen) -->
+  <div class="flow-overlay" id="flowOverlay">
+    <div class="flow-header">
+      <div class="flow-progress-pill" id="flowStepBadge">Step 1 of 4</div>
+      <button class="btn-secondary" id="exitFlowBtn" style="padding: 0 12px; min-height: 38px; font-size: 0.85rem;">
+        ✕ Exit & Save
+      </button>
+    </div>
+
+    <div class="flow-body">
+      <div class="flow-block-context" id="flowBlockLabel">Morning Focus</div>
+      <div class="flow-task-name" id="flowTaskLabel">Task Title</div>
+
+      <div class="timer-display-box" id="flowTimerBox">
+        <div class="timer-digits" id="flowTimerDigits">15:00</div>
+        <div class="timer-label" id="flowTimerStatus">Remaining</div>
+      </div>
+
+      <!-- Subtasks checklist in Flow -->
+      <div class="flow-subtasks-card" id="flowSubtasksBox" style="display: none;">
+        <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px;">
+          Subtasks
+        </div>
+        <div id="flowSubtasksList" style="display: flex; flex-direction: column; gap: 6px;"></div>
+      </div>
+    </div>
+
+    <div class="flow-controls">
+      <div class="flow-timer-btn-row">
+        <button class="btn-secondary" id="flowAddMinBtn">+1 Min</button>
+        <button class="btn-primary" id="flowTogglePauseBtn" style="font-size: 1.05rem;">Pause</button>
+        <button class="btn-secondary" id="flowSkipBtn">Skip ⏭</button>
+      </div>
+      <button class="btn-secondary" id="flowCompleteTaskBtn" style="background: var(--card-sub); border: 1px solid var(--accent); color: #fff; min-height: 48px;">
+        ✓ Complete & Next
+      </button>
+    </div>
+  </div>
+
+  <!-- Inline Application Logic -->
+  <script>
+    /* ==========================================================================
+       1. Application State & Local Storage Data Layer
+       ========================================================================== */
+    const STORAGE_KEY = 'routineflow_pwa_data_v1';
+    const todayISO = new Date().toISOString().split('T')[0];
+
+    const defaultState = {
+      lastVisitDate: todayISO,
+      events: [
+        { id: 'evt-1', title: 'Homeschool Co-op / Enrichment', date: todayISO, startTime: '09:30', endTime: '12:00', meta: 'Community Center' },
+        { id: 'evt-2', title: 'Library Book Pickup', date: todayISO, startTime: '15:15', endTime: '', meta: 'Fruita Branch' }
+      ],
+      blocks: [
+        {
+          id: 'blk-1',
+          title: 'Morning Launch',
+          energy: 'high',
+          isLoop: false,
+          activeLoopIndex: 0,
+          tasks: [
+            { id: 'tsk-1', title: 'Morning Hydration & Supplements', duration: 5, completed: false, subtasks: [] },
+            { id: 'tsk-2', title: 'Math & Reading Session', duration: 30, completed: false, subtasks: [
+              { id: 'sub-1', title: 'Set out Charlotte Mason math workbooks', completed: false },
+              { id: 'sub-2', title: 'Read aloud 1 chapter', completed: false }
+            ]}
+          ]
+        },
+        {
+          id: 'blk-2',
+          title: 'House & Kitchen Loop',
+          energy: 'med',
+          isLoop: true,
+          activeLoopIndex: 0,
+          tasks: [
+            { id: 'tsk-3', title: 'Batch Scratch Dough / Protein Roast', duration: 25, completed: false, subtasks: [] },
+            { id: 'tsk-4', title: 'Garden & African Violet Care', duration: 15, completed: false, subtasks: [] },
+            { id: 'tsk-5', title: 'Mending / Fabric Organizing', duration: 20, completed: false, subtasks: [] }
+          ]
+        },
+        {
+          id: 'blk-3',
+          title: 'Evening Winddown',
+          energy: 'rest',
+          isLoop: false,
+          activeLoopIndex: 0,
+          tasks: [
+            { id: 'tsk-6', title: 'Pack Portable Work Lunch for Tomorrow', duration: 10, completed: false, subtasks: [] },
+            { id: 'tsk-7', title: 'Solo Tabletop / Reading Session', duration: 25, completed: false, subtasks: [] }
+          ]
+        }
+      ]
+    };
+
+    let appState = loadState();
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return defaultState;
+        const parsed = JSON.parse(raw);
+        // Ensure events have dates if migrating from older version
+        if (parsed.events && Array.isArray(parsed.events)) {
+          parsed.events.forEach(evt => {
+            if (!evt.date) evt.date = todayISO;
+          });
+        }
+        return parsed;
+      } catch (e) {
+        console.error('Failed to load local storage state:', e);
+        return defaultState;
+      }
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      } catch (e) {
+        console.error('Error saving state:', e);
+      }
+    }
+
+    /* Auto Daily Reset Check */
+    function checkDailyReset() {
+      const todayStr = new Date().toISOString().split('T')[0];
+      if (appState.lastVisitDate !== todayStr) {
+        performDailyReset(todayStr);
+      }
+    }
+
+    function performDailyReset(newDateStr) {
+      appState.lastVisitDate = newDateStr || new Date().toISOString().split('T')[0];
+      appState.blocks.forEach(block => {
+        if (!block.isLoop) {
+          block.tasks.forEach(task => {
+            task.completed = false;
+            if (task.subtasks) {
+              task.subtasks.forEach(sub => sub.completed = false);
+            }
+          });
+        }
+      });
+      saveState();
+      renderAll();
+    }
+
+    /* ==========================================================================
+       2. Web Audio API Chimes (Zero External Assets)
+       ========================================================================== */
+    let audioCtx = null;
+
+    function initAudioContext() {
+      if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) audioCtx = new AudioContextClass();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function playCompletionChime() {
+      try {
+        initAudioContext();
+        if (!audioCtx) return;
+
+        const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6 arpeggio
+        notes.forEach((freq, idx) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, audioCtx.currentTime + (idx * 0.12));
+          
+          gain.gain.setValueAtTime(0, audioCtx.currentTime + (idx * 0.12));
+          gain.gain.linearRampToValueAtTime(0.25, audioCtx.currentTime + (idx * 0.12) + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (idx * 0.12) + 0.6);
+          
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          
+          osc.start(audioCtx.currentTime + (idx * 0.12));
+          osc.stop(audioCtx.currentTime + (idx * 0.12) + 0.7);
+        });
+      } catch (err) {
+        console.warn('Web Audio playback failed:', err);
+      }
+    }
+
+    /* ==========================================================================
+       3. Screen Wake Lock API Management
+       ========================================================================== */
+    let wakeLockSentinel = null;
+
+    async function requestWakeLock() {
+      if ('wakeLock' in navigator) {
+        try {
+          wakeLockSentinel = await navigator.wakeLock.request('screen');
+          wakeLockSentinel.addEventListener('release', () => {
+            wakeLockSentinel = null;
+          });
+        } catch (err) {
+          console.warn('Wake Lock request error:', err);
+        }
+      }
+    }
+
+    function releaseWakeLock() {
+      if (wakeLockSentinel !== null) {
+        wakeLockSentinel.release().catch(() => {});
+        wakeLockSentinel = null;
+      }
+    }
+
+    /* ==========================================================================
+       4. Focus Flow Mode Engine (Single-Task Timer)
+       ========================================================================== */
+    const flowState = {
+      active: false,
+      blockId: null,
+      taskIndex: 0,
+      totalSeconds: 0,
+      initialSeconds: 0,
+      isPaused: false,
+      isOverrun: false,
+      timerInterval: null
+    };
+
+    function startFlow(blockId, taskIndex = 0) {
+      initAudioContext();
+      requestWakeLock();
+
+      const block = appState.blocks.find(b => b.id === blockId);
+      if (!block || !block.tasks.length) return;
+
+      flowState.active = true;
+      flowState.blockId = blockId;
+      flowState.taskIndex = taskIndex;
+      flowState.isPaused = false;
+
+      setupFlowCurrentTask();
+      document.getElementById('flowOverlay').classList.add('active');
+    }
+
+    function setupFlowCurrentTask() {
+      clearInterval(flowState.timerInterval);
+      const block = appState.blocks.find(b => b.id === flowState.blockId);
+      const task = block.tasks[flowState.taskIndex];
+
+      if (!task) {
+        exitFlow();
+        return;
+      }
+
+      const durationMinutes = task.duration && task.duration > 0 ? task.duration : 10;
+      flowState.initialSeconds = durationMinutes * 60;
+      flowState.totalSeconds = flowState.initialSeconds;
+      flowState.isOverrun = false;
+      flowState.isPaused = false;
+
+      // Update UI Header
+      document.getElementById('flowStepBadge').innerText = `Step ${flowState.taskIndex + 1} of ${block.tasks.length}`;
+      document.getElementById('flowBlockLabel').innerText = block.title;
+      document.getElementById('flowTaskLabel').innerText = task.title;
+      
+      const timerBox = document.getElementById('flowTimerBox');
+      timerBox.classList.remove('overrun');
+      document.getElementById('flowTimerStatus').innerText = 'Remaining';
+      document.getElementById('flowTogglePauseBtn').innerText = 'Pause';
+
+      // Render nested subtasks in flow if any
+      const subBox = document.getElementById('flowSubtasksBox');
+      const subList = document.getElementById('flowSubtasksList');
+      if (task.subtasks && task.subtasks.length > 0) {
+        subBox.style.display = 'block';
+        subList.innerHTML = task.subtasks.map(s => `
+          <div style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer;" onclick="toggleSubtask('${block.id}', '${task.id}', '${s.id}', true)">
+            <div class="subtask-checkbox ${s.completed ? 'checked' : ''}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+            <span style="${s.completed ? 'text-decoration: line-through; color: var(--text-dim);' : ''}">${escapeHtml(s.title)}</span>
+          </div>
+        `).join('');
+      } else {
+        subBox.style.display = 'none';
+      }
+
+      updateFlowTimerDisplay();
+      startFlowTimerInterval();
+    }
+
+    function startFlowTimerInterval() {
+      clearInterval(flowState.timerInterval);
+      flowState.timerInterval = setInterval(() => {
+        if (flowState.isPaused) return;
+
+        if (!flowState.isOverrun) {
+          flowState.totalSeconds--;
+          if (flowState.totalSeconds <= 0) {
+            flowState.isOverrun = true;
+            flowState.totalSeconds = 0;
+            playCompletionChime();
+            document.getElementById('flowTimerBox').classList.add('overrun');
+            document.getElementById('flowTimerStatus').innerText = 'Gentle Overrun';
+          }
+        } else {
+          flowState.totalSeconds++;
+        }
+        updateFlowTimerDisplay();
+      }, 1000);
+    }
+
+    function updateFlowTimerDisplay() {
+      const minutes = Math.floor(flowState.totalSeconds / 60);
+      const seconds = flowState.totalSeconds % 60;
+      const formatted = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+      
+      const display = document.getElementById('flowTimerDigits');
+      display.innerText = flowState.isOverrun ? `+${formatted}` : formatted;
+    }
+
+    function toggleFlowPause() {
+      flowState.isPaused = !flowState.isPaused;
+      const btn = document.getElementById('flowTogglePauseBtn');
+      if (flowState.isPaused) {
+        btn.innerText = 'Resume';
+        releaseWakeLock();
+      } else {
+        btn.innerText = 'Pause';
+        requestWakeLock();
+      }
+    }
+
+    function completeAndAdvanceFlow() {
+      const block = appState.blocks.find(b => b.id === flowState.blockId);
+      const task = block.tasks[flowState.taskIndex];
+      
+      if (block.isLoop) {
+        block.activeLoopIndex = (flowState.taskIndex + 1) % block.tasks.length;
+      } else {
+        task.completed = true;
+        if (task.subtasks) task.subtasks.forEach(s => s.completed = true);
+      }
+      
+      saveState();
+      renderAll();
+
+      if (flowState.taskIndex + 1 < block.tasks.length) {
+        flowState.taskIndex++;
+        setupFlowCurrentTask();
+      } else {
+        playCompletionChime();
+        exitFlow();
+      }
+    }
+
+    function skipFlowTask() {
+      const block = appState.blocks.find(b => b.id === flowState.blockId);
+      if (flowState.taskIndex + 1 < block.tasks.length) {
+        flowState.taskIndex++;
+        setupFlowCurrentTask();
+      } else {
+        exitFlow();
+      }
+    }
+
+    function addMinuteToFlow() {
+      if (flowState.isOverrun) {
+        flowState.isOverrun = false;
+        flowState.totalSeconds = 60;
+        document.getElementById('flowTimerBox').classList.remove('overrun');
+        document.getElementById('flowTimerStatus').innerText = 'Remaining';
+      } else {
+        flowState.totalSeconds += 60;
+      }
+      updateFlowTimerDisplay();
+    }
+
+    function exitFlow() {
+      clearInterval(flowState.timerInterval);
+      flowState.active = false;
+      releaseWakeLock();
+      document.getElementById('flowOverlay').classList.remove('active');
+    }
+
+    /* ==========================================================================
+       5. Rendering & UI Updates
+       ========================================================================== */
+    function renderAll() {
+      renderDateHeader();
+      renderAppointments();
+      renderBlocks();
+    }
+
+    function renderDateHeader() {
+      const now = new Date();
+      const options = { weekday: 'long', month: 'short', day: 'numeric' };
+      document.getElementById('headerDate').innerText = now.toLocaleDateString(undefined, options);
+    }
+
+    function renderAppointments() {
+      const container = document.getElementById('eventList');
+      if (!appState.events || appState.events.length === 0) {
+        container.innerHTML = `<div class="empty-note">No fixed appointments scheduled.</div>`;
+        return;
+      }
+
+      const currentDay = new Date().toISOString().split('T')[0];
+
+      // Sort chronologically by date first, then by start time
+      const sorted = [...appState.events].sort((a, b) => {
+        const dateA = a.date || currentDay;
+        const dateB = b.date || currentDay;
+        if (dateA !== dateB) return dateA.localeCompare(dateB);
+        return (a.startTime || '').localeCompare(b.startTime || '');
+      });
+
+      container.innerHTML = sorted.map(evt => {
+        const evtDate = evt.date || currentDay;
+        const isToday = evtDate === currentDay;
+        const isPast = evtDate < currentDay;
+
+        return `
+          <div class="event-item ${isPast ? 'is-past' : ''}" onclick="openEditEventModal('${evt.id}')" style="cursor: pointer;">
+            <div class="event-date-col">
+              <span class="badge ${isToday ? 'badge-today' : 'badge-date'}">
+                ${formatEventDate(evtDate)}
+              </span>
+              <div class="event-time">
+                ${formatTime(evt.startTime)}${evt.endTime ? ' - ' + formatTime(evt.endTime) : ''}
+              </div>
+            </div>
+            <div class="event-details">
+              <div class="event-name">${escapeHtml(evt.title)}</div>
+              ${evt.meta ? `<div class="event-meta">${escapeHtml(evt.meta)}</div>` : ''}
+            </div>
+            <span style="font-size: 0.8rem; color: var(--text-dim);">✎</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderBlocks() {
+      const container = document.getElementById('blocksContainer');
+      if (!appState.blocks || appState.blocks.length === 0) {
+        container.innerHTML = `<div class="empty-note">No energy routine blocks created. Add one below!</div>`;
+        return;
+      }
+
+      container.innerHTML = appState.blocks.map((block, bIdx) => {
+        const energyClass = `badge-${block.energy || 'med'}`;
+        const energyLabel = getEnergyLabel(block.energy);
+        const isFirstBlock = bIdx === 0;
+        const isLastBlock = bIdx === appState.blocks.length - 1;
+
+        return `
+          <div class="routine-block" data-block-id="${block.id}">
+            <div class="block-top">
+              <div class="block-info">
+                <div class="block-title-row">
+                  <span class="block-title">${escapeHtml(block.title)}</span>
+                  <span class="badge ${energyClass}">${energyLabel}</span>
+                  ${block.isLoop ? `<span class="badge badge-loop">Loop Sequence</span>` : ''}
+                </div>
+                <div class="block-meta">
+                  ${block.tasks.length} tasks • ~${calculateBlockTotalMinutes(block)} min
+                </div>
+              </div>
+              <div class="block-actions">
+                <button class="btn-icon reorder-btn" title="Move Up" ${isFirstBlock ? 'disabled style="opacity:0.3;"' : ''} onclick="moveBlock(${bIdx}, -1)">▲</button>
+                <button class="btn-icon reorder-btn" title="Move Down" ${isLastBlock ? 'disabled style="opacity:0.3;"' : ''} onclick="moveBlock(${bIdx}, 1)">▼</button>
+                <button class="btn-icon reorder-btn" title="Edit Block" onclick="openEditBlockModal('${block.id}')">⚙</button>
+              </div>
+            </div>
+
+            <div class="task-list">
+              ${block.tasks.map((task, tIdx) => renderTaskItem(block, task, tIdx)).join('')}
+              ${block.tasks.length === 0 ? `<div class="empty-note" style="padding:10px;">No tasks in this block yet.</div>` : ''}
+            </div>
+
+            <div class="block-footer">
+              <button class="btn-secondary" style="flex: 1;" onclick="openAddTaskModal('${block.id}')">
+                + Add Task
+              </button>
+              ${block.tasks.length > 0 ? `
+                <button class="btn-primary" style="flex: 1.2;" onclick="startFlow('${block.id}', ${block.isLoop ? (block.activeLoopIndex || 0) : 0})">
+                  ▶ Start Focus Flow
+                </button>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderTaskItem(block, task, tIdx) {
+      const isFirst = tIdx === 0;
+      const isLast = tIdx === block.tasks.length - 1;
+      const isLoopActive = block.isLoop && block.activeLoopIndex === tIdx;
+
+      return `
+        <div class="task-item ${isLoopActive ? 'is-loop-active' : ''}">
+          <div class="task-row">
+            ${block.isLoop ? `
+              <div class="checkbox-custom ${isLoopActive ? 'checked' : ''}" onclick="advanceLoop('${block.id}', ${tIdx})" title="Current Loop Focus">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </div>
+            ` : `
+              <div class="checkbox-custom ${task.completed ? 'checked' : ''}" onclick="toggleTask('${block.id}', '${task.id}')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </div>
+            `}
+
+            <div class="task-content" onclick="toggleTaskDrawer('${task.id}')">
+              <div class="task-title ${task.completed && !block.isLoop ? 'completed' : ''}">
+                ${escapeHtml(task.title)}
+                ${task.duration ? `<span class="task-duration">${task.duration}m</span>` : ''}
+              </div>
+            </div>
+
+            <div class="task-controls">
+              <button class="btn-icon reorder-btn" ${isFirst ? 'disabled style="opacity:0.3;"' : ''} onclick="moveTask('${block.id}', ${tIdx}, -1)">▲</button>
+              <button class="btn-icon reorder-btn" ${isLast ? 'disabled style="opacity:0.3;"' : ''} onclick="moveTask('${block.id}', ${tIdx}, 1)">▼</button>
+              <button class="btn-icon reorder-btn" onclick="openEditTaskModal('${block.id}', '${task.id}')">✎</button>
+            </div>
+          </div>
+
+          <!-- Subtasks Section -->
+          <div class="subtasks-container" id="drawer-${task.id}">
+            ${(task.subtasks || []).map(sub => `
+              <div class="subtask-row">
+                <div class="subtask-left" onclick="toggleSubtask('${block.id}', '${task.id}', '${sub.id}')">
+                  <div class="subtask-checkbox ${sub.completed ? 'checked' : ''}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  </div>
+                  <span class="subtask-title ${sub.completed ? 'completed' : ''}">${escapeHtml(sub.title)}</span>
+                </div>
+                <button class="btn-icon reorder-btn" style="width:28px; height:28px; min-width:28px; min-height:28px; color:var(--danger);" onclick="deleteSubtask('${block.id}', '${task.id}', '${sub.id}')">✕</button>
+              </div>
+            `).join('')}
+            <button class="btn-secondary" style="margin-top: 4px; padding: 0 8px; min-height: 32px; font-size: 0.75rem; align-self: flex-start;" onclick="openAddSubtaskModal('${block.id}', '${task.id}')">
+              + Subtask
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    /* ==========================================================================
+       6. Reordering & Data Action Handlers
+       ========================================================================== */
+    function moveBlock(index, direction) {
+      const target = index + direction;
+      if (target < 0 || target >= appState.blocks.length) return;
+      const temp = appState.blocks[index];
+      appState.blocks[index] = appState.blocks[target];
+      appState.blocks[target] = temp;
+      saveState();
+      renderAll();
+    }
+
+    function moveTask(blockId, taskIndex, direction) {
+      const block = appState.blocks.find(b => b.id === blockId);
+      if (!block) return;
+      const target = taskIndex + direction;
+      if (target < 0 || target >= block.tasks.length) return;
+      
+      const temp = block.tasks[taskIndex];
+      block.tasks[taskIndex] = block.tasks[target];
+      block.tasks[target] = temp;
+
+      if (block.isLoop) {
+        if (block.activeLoopIndex === taskIndex) block.activeLoopIndex = target;
+        else if (block.activeLoopIndex === target) block.activeLoopIndex = taskIndex;
+      }
+
+      saveState();
+      renderAll();
+    }
+
+    function toggleTask(blockId, taskId) {
+      const block = appState.blocks.find(b => b.id === blockId);
+      if (!block) return;
+      const task = block.tasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      task.completed = !task.completed;
+      if (task.subtasks) {
+        task.subtasks.forEach(s => s.completed = task.completed);
+      }
+      saveState();
+      renderAll();
+    }
+
+    function toggleSubtask(blockId, taskId, subtaskId, isInsideFlow = false) {
+      const block = appState.blocks.find(b => b.id === blockId);
+      if (!block) return;
+      const task = block.tasks.find(t => t.id === taskId);
+      if (!task) return;
+      const sub = task.subtasks.find(s => s.id === subtaskId);
+      if (!sub) return;
+
+      sub.completed = !sub.completed;
+      const allDone = task.subtasks.every(s => s.completed);
+      task.completed = allDone;
+
+      saveState();
+      renderAll();
+
+      if (isInsideFlow && flowState.active) {
+        setupFlowCurrentTask();
+      }
+    }
+
+    function advanceLoop(blockId, currentIndex) {
+      const block = appState.blocks.find(b => b.id === blockId);
+      if (!block || !block.isLoop) return;
+      block.activeLoopIndex = (currentIndex + 1) % block.tasks.length;
+      saveState();
+      renderAll();
+    }
+
+    function deleteSubtask(blockId, taskId, subtaskId) {
+      const block = appState.blocks.find(b => b.id === blockId);
+      if (!block) return;
+      const task = block.tasks.find(t => t.id === taskId);
+      if (!task) return;
+      task.subtasks = task.subtasks.filter(s => s.id !== subtaskId);
+      saveState();
+      renderAll();
+    }
+
+    function toggleTaskDrawer(taskId) {
+      const drawer = document.getElementById(`drawer-${taskId}`);
+      if (drawer) {
+        drawer.style.display = drawer.style.display === 'none' ? 'flex' : 'none';
+      }
+    }
+
+    /* ==========================================================================
+       7. Modal Dialogs Management
+       ========================================================================== */
+    function openModal(modalId) {
+      document.getElementById(modalId).classList.add('active');
+    }
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.remove('active');
+    }
+
+    // Appointment Event Modals
+    document.getElementById('addEventBtn').addEventListener('click', () => {
+      document.getElementById('eventModalTitle').innerText = 'Add Appointment';
+      document.getElementById('eventEditId').value = '';
+      document.getElementById('eventTitleInput').value = '';
+      document.getElementById('eventDateInput').value = new Date().toISOString().split('T')[0];
+      document.getElementById('eventStartTimeInput').value = '';
+      document.getElementById('eventEndTimeInput').value = '';
+      document.getElementById('eventMetaInput').value = '';
+      document.getElementById('deleteEventBtn').style.display = 'none';
+      openModal('eventModal');
+    });
+
+    function openEditEventModal(id) {
+      const evt = appState.events.find(e => e.id === id);
+      if (!evt) return;
+      document.getElementById('eventModalTitle').innerText = 'Edit Appointment';
+      document.getElementById('eventEditId').value = evt.id;
+      document.getElementById('eventTitleInput').value = evt.title;
+      document.getElementById('eventDateInput').value = evt.date || new Date().toISOString().split('T')[0];
+      document.getElementById('eventStartTimeInput').value = evt.startTime || '';
+      document.getElementById('eventEndTimeInput').value = evt.endTime || '';
+      document.getElementById('eventMetaInput').value = evt.meta || '';
+      document.getElementById('deleteEventBtn').style.display = 'inline-flex';
+      openModal('eventModal');
+    }
+
+    document.getElementById('saveEventBtn').addEventListener('click', () => {
+      const id = document.getElementById('eventEditId').value;
+      const title = document.getElementById('eventTitleInput').value.trim();
+      const date = document.getElementById('eventDateInput').value || new Date().toISOString().split('T')[0];
+      const startTime = document.getElementById('eventStartTimeInput').value;
+      const endTime = document.getElementById('eventEndTimeInput').value;
+      const meta = document.getElementById('eventMetaInput').value.trim();
+
+      if (!title) { alert('Please enter an event title.'); return; }
+
+      if (id) {
+        const evt = appState.events.find(e => e.id === id);
+        if (evt) {
+          evt.title = title;
+          evt.date = date;
+          evt.startTime = startTime;
+          evt.endTime = endTime;
+          evt.meta = meta;
+        }
+      } else {
+        appState.events.push({
+          id: 'evt-' + Date.now(),
+          title, date, startTime, endTime, meta
+        });
+      }
+      saveState();
+      renderAll();
+      closeModal('eventModal');
+    });
+
+    document.getElementById('deleteEventBtn').addEventListener('click', () => {
+      const id = document.getElementById('eventEditId').value;
+      if (!confirm('Delete this appointment?')) return;
+      appState.events = appState.events.filter(e => e.id !== id);
+      saveState();
+      renderAll();
+      closeModal('eventModal');
+    });
+
+    // Routine Block Modals
+    document.getElementById('addBlockBtn').addEventListener('click', () => {
+      document.getElementById('blockModalTitle').innerText = 'Add Energy Block';
+      document.getElementById('blockEditId').value = '';
+      document.getElementById('blockTitleInput').value = '';
+      document.getElementById('blockEnergyInput').value = 'med';
+      document.getElementById('blockModeInput').value = 'standard';
+      document.getElementById('deleteBlockBtn').style.display = 'none';
+      openModal('blockModal');
+    });
+
+    function openEditBlockModal(blockId) {
+      const block = appState.blocks.find(b => b.id === blockId);
+      if (!block) return;
+      document.getElementById('blockModalTitle').innerText = 'Edit Energy Block';
+      document.getElementById('blockEditId').value = block.id;
+      document.getElementById('blockTitleInput').value = block.title;
+      document.getElementById('blockEnergyInput').value = block.energy || 'med';
+      document.getElementById('blockModeInput').value = block.isLoop ? 'loop' : 'standard';
+      document.getElementById('deleteBlockBtn').style.display = 'inline-flex';
+      openModal('blockModal');
+    }
+
+    document.getElementById('saveBlockBtn').addEventListener('click', () => {
+      const id = document.getElementById('blockEditId').value;
+      const title = document.getElementById('blockTitleInput').value.trim();
+      const energy = document.getElementById('blockEnergyInput').value;
+      const isLoop = document.getElementById('blockModeInput').value === 'loop';
+
+      if (!title) { alert('Please give this block a title.'); return; }
+
+      if (id) {
+        const block = appState.blocks.find(b => b.id === id);
+        if (block) {
+          block.title = title;
+          block.energy = energy;
+          block.isLoop = isLoop;
+        }
+      } else {
+        appState.blocks.push({
+          id: 'blk-' + Date.now(),
+          title,
+          energy,
+          isLoop,
+          activeLoopIndex: 0,
+          tasks: []
+        });
+      }
+      saveState();
+      renderAll();
+      closeModal('blockModal');
+    });
+
+    document.getElementById('deleteBlockBtn').addEventListener('click', () => {
+      const id = document.getElementById('blockEditId').value;
+      if (!confirm('Delete this routine block and all its tasks?')) return;
+      appState.blocks = appState.blocks.filter(b => b.id !== id);
+      saveState();
+      renderAll();
+      closeModal('blockModal');
+    });
+
+    // Task Modals
+    function openAddTaskModal(blockId) {
+      document.getElementById('taskModalTitle').innerText = 'Add Task';
+      document.getElementById('taskParentBlockId').value = blockId;
+      document.getElementById('taskEditId').value = '';
+      document.getElementById('taskTitleInput').value = '';
+      document.getElementById('taskDurationInput').value = '15';
+      document.getElementById('deleteTaskBtn').style.display = 'none';
+      openModal('taskModal');
+    }
+
+    function openEditTaskModal(blockId, taskId) {
+      const block = appState.blocks.find(b => b.id === blockId);
+      if (!block) return;
+      const task = block.tasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      document.getElementById('taskModalTitle').innerText = 'Edit Task';
+      document.getElementById('taskParentBlockId').value = blockId;
+      document.getElementById('taskEditId').value = task.id;
+      document.getElementById('taskTitleInput').value = task.title;
+      document.getElementById('taskDurationInput').value = task.duration || '';
+      document.getElementById('deleteTaskBtn').style.display = 'inline-flex';
+      openModal('taskModal');
+    }
+
+    document.getElementById('saveTaskBtn').addEventListener('click', () => {
+      const blockId = document.getElementById('taskParentBlockId').value;
+      const taskId = document.getElementById('taskEditId').value;
+      const title = document.getElementById('taskTitleInput').value.trim();
+      const duration = parseInt(document.getElementById('taskDurationInput').value, 10) || 0;
+
+      if (!title) { alert('Please enter a task name.'); return; }
+      const block = appState.blocks.find(b => b.id === blockId);
+      if (!block) return;
+
+      if (taskId) {
+        const task = block.tasks.find(t => t.id === taskId);
+        if (task) {
+          task.title = title;
+          task.duration = duration;
+        }
+      } else {
+        block.tasks.push({
+          id: 'tsk-' + Date.now(),
+          title,
+          duration,
+          completed: false,
+          subtasks: []
+        });
+      }
+      saveState();
+      renderAll();
+      closeModal('taskModal');
+    });
+
+    document.getElementById('deleteTaskBtn').addEventListener('click', () => {
+      const blockId = document.getElementById('taskParentBlockId').value;
+      const taskId = document.getElementById('taskEditId').value;
+      if (!confirm('Delete this task?')) return;
+      const block = appState.blocks.find(b => b.id === blockId);
+      if (block) {
+        block.tasks = block.tasks.filter(t => t.id !== taskId);
+        if (block.activeLoopIndex >= block.tasks.length) block.activeLoopIndex = 0;
+      }
+      saveState();
+      renderAll();
+      closeModal('taskModal');
+    });
+
+    // Subtask Modal
+    function openAddSubtaskModal(blockId, taskId) {
+      document.getElementById('subtaskParentBlockId').value = blockId;
+      document.getElementById('subtaskParentTaskId').value = taskId;
+      document.getElementById('subtaskTitleInput').value = '';
+      openModal('subtaskModal');
+    }
+
+    document.getElementById('saveSubtaskBtn').addEventListener('click', () => {
+      const blockId = document.getElementById('subtaskParentBlockId').value;
+      const taskId = document.getElementById('subtaskParentTaskId').value;
+      const title = document.getElementById('subtaskTitleInput').value.trim();
+
+      if (!title) { alert('Please enter subtask details.'); return; }
+      const block = appState.blocks.find(b => b.id === blockId);
+      if (!block) return;
+      const task = block.tasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      if (!task.subtasks) task.subtasks = [];
+      task.subtasks.push({
+        id: 'sub-' + Date.now(),
+        title,
+        completed: false
+      });
+
+      saveState();
+      renderAll();
+      closeModal('subtaskModal');
+    });
+
+    // Settings, Backups & JSON Handlers
+    document.getElementById('openSettingsBtn').addEventListener('click', () => {
+      openModal('settingsModal');
+    });
+
+    document.getElementById('exportDataBtn').addEventListener('click', () => {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState, null, 2));
+      const downloadAnchor = document.createElement('a');
+      const timestamp = new Date().toISOString().split('T')[0];
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `routineflow_backup_${timestamp}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    });
+
+    document.getElementById('triggerImportBtn').addEventListener('click', () => {
+      document.getElementById('importFileInput').click();
+    });
+
+    document.getElementById('importFileInput').addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (imported && Array.isArray(imported.blocks)) {
+            if (confirm('Import backup? This will replace your current routines.')) {
+              appState = imported;
+              if (appState.events && Array.isArray(appState.events)) {
+                appState.events.forEach(evt => {
+                  if (!evt.date) evt.date = todayISO;
+                });
+              }
+              saveState();
+              renderAll();
+              closeModal('settingsModal');
+              alert('Backup restored successfully!');
+            }
+          } else {
+            alert('Invalid backup file format.');
+          }
+        } catch (err) {
+          alert('Error parsing JSON backup file.');
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    document.getElementById('forceDailyResetBtn').addEventListener('click', () => {
+      if (confirm('Uncheck all standard tasks now? (Loop sequences will be preserved)')) {
+        performDailyReset();
+        closeModal('settingsModal');
+      }
+    });
+
+    // Focus Flow Button Bindings
+    document.getElementById('flowTogglePauseBtn').addEventListener('click', toggleFlowPause);
+    document.getElementById('flowCompleteTaskBtn').addEventListener('click', completeAndAdvanceFlow);
+    document.getElementById('flowSkipBtn').addEventListener('click', skipFlowTask);
+    document.getElementById('flowAddMinBtn').addEventListener('click', addMinuteToFlow);
+    document.getElementById('exitFlowBtn').addEventListener('click', exitFlow);
+
+    /* ==========================================================================
+       8. Helper Utilities & Formatters
+       ========================================================================== */
+    function formatTime(timeStr) {
+      if (!timeStr) return '';
+      const [h, m] = timeStr.split(':');
+      let hours = parseInt(h, 10);
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      hours = hours ? hours : 12;
+      return `${hours}:${m} ${ampm}`;
+    }
+
+    function formatEventDate(dateStr) {
+      if (!dateStr) return 'Today';
+      const currentDay = new Date().toISOString().split('T')[0];
+      if (dateStr === currentDay) return 'Today';
+
+      // Parse string parts to avoid timezone date shifts
+      const [y, m, d] = dateStr.split('-').map(num => parseInt(num, 10));
+      const dateObj = new Date(y, m - 1, d);
+      return dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    }
+
+    function getEnergyLabel(energy) {
+      switch (energy) {
+        case 'high': return '⚡ High Focus';
+        case 'med': return '🔹 Medium Energy';
+        case 'low': return '🌱 Low Energy';
+        case 'rest': return '🌙 Rest & Recharge';
+        default: return 'Medium Energy';
+      }
+    }
+
+    function calculateBlockTotalMinutes(block) {
+      return (block.tasks || []).reduce((acc, t) => acc + (parseInt(t.duration, 10) || 0), 0);
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    /* ==========================================================================
+       9. Progressive Web App Service Worker (Offline Support)
+       ========================================================================== */
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        const swScript = `
+          const CACHE_NAME = 'routineflow-cache-v2';
+          self.addEventListener('install', (e) => {
+            self.skipWaiting();
+          });
+          self.addEventListener('activate', (e) => {
+            e.waitUntil(clients.claim());
+          });
+          self.addEventListener('fetch', (e) => {
+            e.respondWith(
+              fetch(e.request).catch(() => caches.match(e.request))
+            );
+          });
+        `;
+        const blob = new Blob([swScript], { type: 'application/javascript' });
+        const swUrl = URL.createObjectURL(blob);
+        navigator.serviceWorker.register(swUrl).catch((err) => {
+          console.warn('SW registration skipped:', err);
+        });
+      });
+    }
+
+    // App Initialization
+    document.addEventListener('DOMContentLoaded', () => {
+      checkDailyReset();
+      renderAll();
+    });
+
+    // Check reset on mobile app visibility resume
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        checkDailyReset();
+      }
+    });
+  </script>
+</body>
+</html>
